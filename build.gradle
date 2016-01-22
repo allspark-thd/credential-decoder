@@ -29,6 +29,7 @@ repositories {
 
 dependencies {
 	compile('org.springframework.boot:spring-boot-starter')
+	compile('org.mariadb.jdbc:mariadb-java-client:1.3.4')
 	testCompile('org.springframework.boot:spring-boot-starter-test') 
 }
 
