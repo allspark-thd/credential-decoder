@@ -31,6 +31,6 @@ public class Base64CredentialDecoder implements CredentialDecoder {
 
     @Override
     public String getPassword() {
-        return "svc-password";
+        return password;
     }
 }

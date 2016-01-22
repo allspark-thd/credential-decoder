@@ -29,7 +29,11 @@ public class Base64CredentialDecoderTest {
             EMPTY = new JSONObject(),
             APP_NO_PW = new JSONObject("{ 'name': 'app-no-pw', 'credentials': { 'host': 'example.com', 'protocol': 'https' }, 'syslog_drain_url': '' }"),
             APP_WITH_PLAIN_PW = new JSONObject("{ 'name': 'app-with-pw', 'label': 'user-provided', 'tags': [], 'credentials': { 'host': 'hostname.example.com', 'password': 'plain-password?', 'protocol': 'https', 'username': 'svc-user' }, 'syslog_drain_url': '' }"),
-            APP_WITH_ENCODED_PW = new JSONObject("{ 'name': 'app-with-pw', 'label': 'user-provided', 'tags': [], 'credentials': { 'host': 'hostname.example.com', 'password': 'c3ZjLXBhc3N3b3Jk', 'protocol': 'https', 'username': 'svc-user' }, 'syslog_drain_url': '' }");
+            // 'svc-password'
+            APP_WITH_ENCODED_PW = new JSONObject("{ 'name': 'app-with-pw', 'label': 'user-provided', 'tags': [], 'credentials': { 'host': 'hostname.example.com', 'password': 'c3ZjLXBhc3N3b3Jk', 'protocol': 'https', 'username': 'svc-user' }, 'syslog_drain_url': '' }"),
+            // 'super_secret!!##'
+            APP_WITH_ENCODED_PW2 = new JSONObject("{ 'name': 'app-with-pw', 'label': 'user-provided', 'tags': [], 'credentials': { 'host': 'hostname.example.com', 'password': 'c3VwZXJfc2VjcmV0ISEjIw==', 'protocol': 'https', 'username': 'svc-user' }, 'syslog_drain_url': '' }")
+                    ;
 
     @Test
     public void should_throw_meaningful_message_when_no_json() {
@@ -62,6 +66,10 @@ public class Base64CredentialDecoderTest {
         assertThat(
                 decoder.init(APP_WITH_ENCODED_PW).getPassword(),
                 is(equalTo("svc-password"))
+        );
+        assertThat(
+                decoder.init(APP_WITH_ENCODED_PW2).getPassword(),
+                is(equalTo("super_secret!!##"))
         );
     }
 
