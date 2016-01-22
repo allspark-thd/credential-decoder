@@ -1,5 +1,6 @@
-package dbbroker.client;
+package credentialdecoder.base64;
 
+import credentialdecoder.CredentialDecoder;
 import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;

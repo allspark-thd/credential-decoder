@@ -1,4 +1,4 @@
-package dbbroker.client;
+package credentialdecoder;
 
 import org.json.JSONObject;
 
