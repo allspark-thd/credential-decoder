@@ -22,6 +22,7 @@ repositories {
 
 dependencies {
 	compile('org.json:json:20151123')
+	compile('org.apache.httpcomponents:httpclient:4.5.1')
 	testCompile('junit:junit:4.12')
 	testCompile('org.hamcrest:hamcrest-all:1.3')
 }
