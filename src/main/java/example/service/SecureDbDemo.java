@@ -1,6 +1,6 @@
 package example.service;
 
-import example.service.util.VaultHelper;
+import credentialdecoder.vault.VaultCredentialDecoder;
 import org.apache.log4j.Logger;
 import org.json.JSONObject;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceBuilder;
@@ -12,6 +12,7 @@ import javax.sql.DataSource;
 @Service
 public class SecureDbDemo {
     private JSONObject credentials;
+    private VaultCredentialDecoder vaultDecoderRing;
     private Logger log = Logger.getLogger(SecureDbDemo.class);
     private DataSource ds;
 
@@ -21,18 +22,30 @@ public class SecureDbDemo {
         initialize();
     }
 
-    public DataSource dataSource(JSONObject credentials) {
-        VaultHelper vault = new VaultHelper(credentials);
-        DataSourceBuilder dataSourceBuilder = DataSourceBuilder.create();
-        dataSourceBuilder.url(vault.getUrl().toString());
-        dataSourceBuilder.username(vault.getUser());
-        dataSourceBuilder.password(vault.getPassword());
-        return dataSourceBuilder.build();
+    public DataSource dataSource() {
+        try {
+            log.info(vaultDecoderRing.getPassword());
+            DataSourceBuilder dataSourceBuilder = DataSourceBuilder.create();
+            dataSourceBuilder.url(" ");
+            dataSourceBuilder.username(" ");
+            dataSourceBuilder.password(" ");
+            return dataSourceBuilder.build();
+        }
+        catch(Exception e) {
+            log.info(e.getMessage());
+            return null;
+        }
     }
 
     private void initialize() {
-        //ds = dataSource(credentials);
-        log.info(credentials);
+        try {
+            vaultDecoderRing.init(credentials);
+            ds = dataSource();
+            log.info(credentials);
+        }
+        catch(Exception e) {
+            log.info(e.getMessage());
+        }
     }
 }
 
