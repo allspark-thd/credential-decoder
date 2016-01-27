@@ -1,4 +1,4 @@
-package dbBrokerClient.config;
+package example.config;
 
 import example.service.SecureDbDemo;
 import org.json.JSONObject;

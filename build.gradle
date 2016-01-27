@@ -32,6 +32,8 @@ dependencies {
 	compile("com.fasterxml.jackson.core:jackson-databind")
 	compile('org.json:json:20151123')
 	compile('org.apache.httpcomponents:httpclient:4.5.1')
+    compile("org.springframework:spring-web")
+    testCompile('org.springframework.boot:spring-boot-starter-test')
 	testCompile('junit:junit:4.12')
 	testCompile('org.hamcrest:hamcrest-all:1.3')
 }
