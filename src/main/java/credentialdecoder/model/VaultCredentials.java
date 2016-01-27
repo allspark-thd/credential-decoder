@@ -1,3 +1,5 @@
+package credentialdecoder.model;
+
 public class VaultCredentials {
  public final String
 	 app_id,
