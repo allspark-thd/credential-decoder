@@ -5,6 +5,9 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.EntityBuilder;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.ContentType;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.protocol.HTTP;
 import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
@@ -14,10 +17,14 @@ import org.omg.IOP.ENCODING_CDR_ENCAPS;
 
 import java.io.IOException;
 
+import static credentialdecoder.vault.VaultCredentialDecoder.*;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class VaultCredentialDecoderTest {
  @Test
@@ -55,11 +62,18 @@ public class VaultCredentialDecoderTest {
 
  @Test
  public void valid () {
+	JSONObject validEntity = new JSONObject( "{ auth: { client_token: 'abcdeftoken' } }" );
+	VaultCredentialDecoder vc = new VaultCredentialDecoder();
+	vc.fetchToken = creds -> validEntity;
+	vc.fetchCreds = token -> new JSONObject( "{ data: { value: 'smartwater' } }" );
+		;
+//	vc.getToken = x -> extractToken.apply( validEntity );
+
 	assertThat(
 		vc.init(
 			json( "app", "user" )
 		).getPassword(),
-		equalTo( "smartwater" )
+		equalTo( new JSONObject( "{ value: 'smartwater' }" ).toString() )
 	);
  }
 
@@ -78,37 +92,9 @@ public class VaultCredentialDecoderTest {
 	);
  }
 
-	HttpClient mockHttpClient;
-	VaultCredentialDecoder vc;
-	HttpUriRequest validLoginRequest;
-
-	@Before
-	public void setup () throws IOException {
-		mockHttpClient = Mockito.mock(HttpClient.class);
-		vc = new VaultCredentialDecoder(mockHttpClient);
-		validLoginRequest = vc.tokenRequest.apply( new JSONObject("{'app_id':'111111', 'user_id': '999999'}") );
-
-		HttpResponse validLoginResponse = Mockito.mock(HttpResponse.class);
-		JSONObject validEntity = new JSONObject("{ 'auth': { 'client_token': 'abcdeftoken' } }");
-		validLoginResponse.setEntity(
-				EntityBuilder.create()
-						.setContentType(ContentType.APPLICATION_JSON)
-						.setText(validEntity.toString())
-						.build()
-		);
-
-// 		Mockito.when(validLoginResponse.getEntity()).thenReturn(EntityBuilder.create().setText("{ 'auth': { 'client_token': 'abcdeftoken' } }").build());
-//		validLoginResponse.setStatusCode(200);
-
-		Mockito
-		.when(mockHttpClient.execute(validLoginRequest))
-		.thenReturn(validLoginResponse)
-				;
-	}
-
  void expect_init_error_message ( JSONObject json, String message ) {
 	try {
-	 vc.init( json );
+	 new VaultCredentialDecoder().init( json );
 	 fail( "expected error to be thrown" );
 	} catch ( RuntimeException re ) {
 	 assertThat(
