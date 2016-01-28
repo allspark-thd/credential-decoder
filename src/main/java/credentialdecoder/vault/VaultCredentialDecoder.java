@@ -10,7 +10,6 @@ import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONObject;
@@ -20,13 +19,13 @@ import java.util.function.Function;
 
 public class VaultCredentialDecoder implements CredentialDecoder {
 
-    private String app, space;
+    private String app, user;
     static HttpClient client = HttpClients.createDefault();
 
     @Override
     public CredentialDecoder init(JSONObject props) {
         this.app = getApp.apply(props);
-        this.space = getUser.apply(props);
+        this.user = getUser.apply(props);
 
         return this;
     }
@@ -128,7 +127,7 @@ public class VaultCredentialDecoder implements CredentialDecoder {
                 .apply(appCreds);
     }
 
-    JSONObject getCreds(JSONObject json) {
+    public JSONObject getCreds(JSONObject json) {
         return
                 getjson
                         .apply("data")
@@ -139,7 +138,7 @@ public class VaultCredentialDecoder implements CredentialDecoder {
 
     @Override
     public String getPassword() {
-        return getCreds(new JSONObject("{'app_id':'111111', 'user_id': '999999'}"))
+        return getCreds(new JSONObject().put("app_id", app).put("user_id", user))
                 .toString()
                 ;
     }

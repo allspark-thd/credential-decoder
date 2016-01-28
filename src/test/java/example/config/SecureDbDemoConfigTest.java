@@ -17,6 +17,6 @@ public class SecureDbDemoConfigTest {
     public void it_handles_null_vcapServices() {
         SecureDbDemoConfig config = new SecureDbDemoConfig();
         SecureDbDemo dbDemo = config.secureDbDemo();
-        assertThat(dbDemo.dataSource() == null, is(true));
+        assertThat(dbDemo.configureDataSourceBuilder() == null, is(true));
     }
 }

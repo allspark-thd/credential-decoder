@@ -1,5 +1,6 @@
 package example.config;
 
+import credentialdecoder.vault.VaultCredentialDecoder;
 import example.service.SecureDbDemo;
 import org.json.JSONObject;
 import org.springframework.context.annotation.Bean;
@@ -12,17 +13,18 @@ public class SecureDbDemoConfig {
     SecureDbDemo secureDbDemo() {
 
         JSONObject credentials = new JSONObject("{}");
-        try
-        {
+        VaultCredentialDecoder vaultDecoderRing = new VaultCredentialDecoder();
+        try {
             String vcapEnv = System.getenv("VCAP_SERVICES");
             JSONObject vcapServices = new JSONObject(vcapEnv);
             credentials = (JSONObject) vcapServices.get("credentials");
+            vaultDecoderRing = new VaultCredentialDecoder();
+            vaultDecoderRing.init(credentials);
         }
-        catch(Exception e)
-        {
+        catch(Exception e) {
 
         }
 
-        return new SecureDbDemo(credentials);
+        return new SecureDbDemo(vaultDecoderRing);
     }
 }

@@ -11,41 +11,36 @@ import javax.sql.DataSource;
 
 @Service
 public class SecureDbDemo {
-    private JSONObject credentials;
-    private VaultCredentialDecoder vaultDecoderRing;
-    private Logger log = Logger.getLogger(SecureDbDemo.class);
-    private DataSource ds;
 
-    public SecureDbDemo(JSONObject credentials) {
-        log.info("Creating service checker with " + credentials);
-        this.credentials = credentials;
-        initialize();
+    private VaultCredentialDecoder vaultDecoderRing = new VaultCredentialDecoder();
+    private Logger log = Logger.getLogger(SecureDbDemo.class);
+
+    public SecureDbDemo(VaultCredentialDecoder vc) {
+        this.vaultDecoderRing = vc;
     }
 
-    public DataSource dataSource() {
+    public DataSourceBuilder configureDataSourceBuilder() {
+
+        DataSourceBuilder dataSourceBuilder = DataSourceBuilder.create();
+
         try {
             log.info(vaultDecoderRing.getPassword());
-            DataSourceBuilder dataSourceBuilder = DataSourceBuilder.create();
-            dataSourceBuilder.url(" ");
-            dataSourceBuilder.username(" ");
-            dataSourceBuilder.password(" ");
-            return dataSourceBuilder.build();
-        }
-        catch(Exception e) {
-            log.info(e.getMessage());
+            JSONObject creds = new JSONObject(vaultDecoderRing.getPassword());
+
+            log.info(creds.getString("url"));
+            log.info(creds.getString("user"));
+            log.info(creds.get("password"));
+
+            dataSourceBuilder.driverClassName("org.mariadb.jdbc.Driver");
+            dataSourceBuilder.url(creds.getString("url"));
+            dataSourceBuilder.username(creds.getString("user"));
+            dataSourceBuilder.password(creds.getString("password"));
+
+        } catch (Exception e) {
+            log.error("Unable to create datasource with credentials - " + e.getMessage());
             return null;
         }
-    }
-
-    private void initialize() {
-        try {
-            vaultDecoderRing.init(credentials);
-            ds = dataSource();
-            log.info(credentials);
-        }
-        catch(Exception e) {
-            log.info(e.getMessage());
-        }
+        return dataSourceBuilder;
     }
 }
 
