@@ -1,12 +1,12 @@
 package example.config;
 
-import example.service.SecureDbDemo;
+import example.service.SecureDbService;
 import org.junit.Test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
-public class SecureDbDemoConfigTest {
+public class SecureDbServiceConfigTest {
 
     /**
      * WARNING!
@@ -15,8 +15,8 @@ public class SecureDbDemoConfigTest {
      */
     @Test
     public void it_handles_null_vcapServices() {
-        SecureDbDemoConfig config = new SecureDbDemoConfig();
-        SecureDbDemo dbDemo = config.secureDbDemo();
+        SecureDbServiceConfig config = new SecureDbServiceConfig();
+        SecureDbService dbDemo = config.secureDbDemo();
         assertThat(dbDemo.configureDataSourceBuilder() == null, is(true));
     }
 }

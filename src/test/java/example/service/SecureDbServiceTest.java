@@ -8,12 +8,11 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertThat;
 
-
-public class SecureDbDemoTest {
+public class SecureDbServiceTest {
 
     @Mock
     private VaultCredentialDecoder vaultCredentialDecoder;
@@ -25,17 +24,17 @@ public class SecureDbDemoTest {
 
     @Test
     public void should_Create_DataSource_With_Valid_Creds() {
-        SecureDbDemo secureDB = new SecureDbDemo(vaultCredentialDecoder);
+        SecureDbService secureDB = new SecureDbService(vaultCredentialDecoder);
         JSONObject validResponse = new JSONObject("{ user: 'smartwater', password: 'password', url:'jdbc:mariadb://target;AUTO_RECONNECT=TRUE' } ");
 
         Mockito.when(vaultCredentialDecoder.getPassword()).thenReturn(validResponse.toString());
-        assertThat(secureDB.configureDataSourceBuilder()==null, equalTo(false));
+        assertNotNull(secureDB.configureDataSourceBuilder());
     }
 
     @Test
     public void should_Return_Null_When_Given_Invalid_Creds() {
-        SecureDbDemo secureDb = new SecureDbDemo(vaultCredentialDecoder);
-        assertThat(secureDb.configureDataSourceBuilder()==null, equalTo(true));
+        SecureDbService secureDb = new SecureDbService(vaultCredentialDecoder);
+        assertNull(secureDb.configureDataSourceBuilder());
     }
 
 }

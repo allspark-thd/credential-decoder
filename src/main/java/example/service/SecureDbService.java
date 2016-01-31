@@ -1,22 +1,23 @@
 package example.service;
 
-import credentialdecoder.vault.VaultCredentialDecoder;
+import credentialdecoder.CredentialDecoder;
 import org.apache.log4j.Logger;
 import org.json.JSONObject;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceBuilder;
 import org.springframework.stereotype.Service;
 
-import javax.sql.DataSource;
-
-
 @Service
-public class SecureDbDemo {
+public class SecureDbService {
 
-    private VaultCredentialDecoder vaultDecoderRing = new VaultCredentialDecoder();
-    private Logger log = Logger.getLogger(SecureDbDemo.class);
+    private CredentialDecoder decoderRing;
+    private Logger log = Logger.getLogger(SecureDbService.class);
 
-    public SecureDbDemo(VaultCredentialDecoder vc) {
-        this.vaultDecoderRing = vc;
+    public SecureDbService(CredentialDecoder vc) {
+        this.decoderRing = vc;
+    }
+
+    public SecureDbService() {
+
     }
 
     public DataSourceBuilder configureDataSourceBuilder() {
@@ -24,8 +25,8 @@ public class SecureDbDemo {
         DataSourceBuilder dataSourceBuilder = DataSourceBuilder.create();
 
         try {
-            log.info(vaultDecoderRing.getPassword());
-            JSONObject creds = new JSONObject(vaultDecoderRing.getPassword());
+            log.info(decoderRing.getPassword());
+            JSONObject creds = new JSONObject(decoderRing.getPassword());
 
             log.info(creds.getString("url"));
             log.info(creds.getString("user"));

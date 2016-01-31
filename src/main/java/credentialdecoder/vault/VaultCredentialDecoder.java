@@ -1,7 +1,6 @@
 package credentialdecoder.vault;
 
 
-import credentialdecoder.CredentialDecoder;
 import org.apache.commons.codec.Charsets;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -17,13 +16,16 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.util.function.Function;
 
-public class VaultCredentialDecoder implements CredentialDecoder {
+public class VaultCredentialDecoder implements credentialdecoder.CredentialDecoder {
 
     private String app, user;
     static HttpClient client = HttpClients.createDefault();
+    static String VAULT = "http://127.0.0.1:8200";
+    static String CREDS_URL = VAULT + "/v1/secret/dbidtest";
+    static String LOGIN_URL = "/v1/auth/app-id/login";
 
     @Override
-    public CredentialDecoder init(JSONObject props) {
+    public credentialdecoder.CredentialDecoder init(JSONObject props) {
         this.app = getApp.apply(props);
         this.user = getUser.apply(props);
 
@@ -45,10 +47,6 @@ public class VaultCredentialDecoder implements CredentialDecoder {
     static Function<JSONObject, String>
             getApp = getField("app_id"),
             getUser = getField("user_id");
-
-    static String VAULT = "http://172.24.100.33:8200";
-    static String CREDS_URL = VAULT + "/v1/secret/dbidtest";
-    static String LOGIN_URL = "/v1/auth/app-id/login";
 
     static RuntimeException responseErr(HttpResponse response) {
         return new RuntimeException(
