@@ -13,7 +13,7 @@ public class VaultCredentialDecoderTest {
     public void should_throw_meaningful_message_when_null() {
         expect_init_error_message(
                 null,
-                "`app_id` and `user_id` are required"
+                "`app_id`, `user_id`, `vault_url`, `login_path`, and `creds_path` are required"
         );
     }
 
@@ -21,14 +21,14 @@ public class VaultCredentialDecoderTest {
     public void should_throw_meaningful_message_when_no_json() {
         expect_init_error_message(
                 new JSONObject(),
-                "`app_id` and `user_id` are required"
+                "`app_id`, `user_id`, `vault_url`, `login_path`, and `creds_path` are required"
         );
     }
 
     @Test
     public void should_throw_meaningful_message_when_no_application() {
         expect_init_error_message(
-                json(null, "userid"),
+                json(null, "user_id", "vault_url", "login_path", "creds_path"),
                 "`credentials.app_id` not found"
         );
     }
@@ -36,7 +36,7 @@ public class VaultCredentialDecoderTest {
     @Test
     public void should_throw_meaningful_message_when_no_user() {
         expect_init_error_message(
-                json("appid", null),
+                json("app_id", null, "vault_url", "login_path", "creds_path"),
                 "`credentials.user_id` not found"
         );
     }
@@ -51,18 +51,17 @@ public class VaultCredentialDecoderTest {
 
         assertThat(
                 vc.init(
-                        json("app", "user")
+                        json("app", "user", "vault_url", "login_path", "creds_path")
                 ).getPassword(),
                 equalTo(new JSONObject("{ value: 'smartwater' }").toString())
         );
     }
 
- private JSONObject json ( String app, String space ) {
+ private JSONObject json ( String app, String space, String vault, String login, String creds ) {
 	return new JSONObject(
 		String.format(
-			"{ credentials: { app_id: %s, user_id: %s } }",
-			app,
-			space
+			"{ credentials: { app_id: %s, user_id: %s, vault_url: %s, login_path: %s, creds_path: %s } }",
+			app, space, vault, login, creds
 		)
 	);
  }

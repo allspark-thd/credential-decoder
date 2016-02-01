@@ -18,17 +18,16 @@ import java.util.function.Function;
 
 public class VaultCredentialDecoder implements credentialdecoder.CredentialDecoder {
 
-    private String app, user;
+    private String app, user, vault_url, login_path, creds_path;
     static HttpClient client = HttpClients.createDefault();
-    static String VAULT = "http://127.0.0.1:8200";
-    static String CREDS_URL = VAULT + "/v1/secret/dbidtest";
-    static String LOGIN_URL = "/v1/auth/app-id/login";
 
     @Override
     public credentialdecoder.CredentialDecoder init(JSONObject props) {
         this.app = getApp.apply(props);
         this.user = getUser.apply(props);
-
+        this.vault_url = getVaultUrl.apply(props);
+        this.creds_path = vault_url + getCredsPath.apply(props);
+        this.login_path = vault_url + getLoginPath.apply(props);
         return this;
     }
 
@@ -38,7 +37,7 @@ public class VaultCredentialDecoder implements credentialdecoder.CredentialDecod
                 return json.getJSONObject("credentials").getString(field);
             } catch (Exception e) {
                 throw new RuntimeException(
-                        String.format("`credentials.%s` not found. `app_id` and `user_id` are required.", field)
+                        String.format("`credentials.%s` not found. `app_id`, `user_id`, `vault_url`, `login_path`, and `creds_path` are required", field)
                 );
             }
         };
@@ -46,7 +45,11 @@ public class VaultCredentialDecoder implements credentialdecoder.CredentialDecod
 
     static Function<JSONObject, String>
             getApp = getField("app_id"),
-            getUser = getField("user_id");
+            getUser = getField("user_id"),
+            getVaultUrl = getField("vault_url"),
+            getCredsPath = getField("creds_path"),
+            getLoginPath = getField("login_path");
+
 
     static RuntimeException responseErr(HttpResponse response) {
         return new RuntimeException(
@@ -90,9 +93,9 @@ public class VaultCredentialDecoder implements credentialdecoder.CredentialDecod
     static Function<RequestBuilder, HttpUriRequest> buildRequest =
             RequestBuilder::build;
 
-    static Function<String, HttpUriRequest> credsRequest =
+    Function<String, HttpUriRequest> credsRequest =
             token -> RequestBuilder
-                    .get(CREDS_URL)
+                    .get(creds_path)
                     .addHeader("X-Vault-Token", token).build();
 
     static Function<String, Function<JSONObject, JSONObject>>
@@ -106,11 +109,11 @@ public class VaultCredentialDecoder implements credentialdecoder.CredentialDecod
                     .apply("client_token")
                     .compose(getjson.apply("auth"));
 
-    static Function<JSONObject, HttpUriRequest> tokenRequest =
+    Function<JSONObject, HttpUriRequest> tokenRequest =
             buildRequest
                     .compose(
                             RequestBuilder
-                                    .post(LOGIN_URL)
+                                    .post(login_path)
                                     ::setEntity
                     )
                     .compose(toEntity);
