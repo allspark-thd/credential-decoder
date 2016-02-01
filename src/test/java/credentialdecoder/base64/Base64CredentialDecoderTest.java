@@ -14,18 +14,6 @@ import static org.junit.Assert.fail;
 
 public class Base64CredentialDecoderTest {
 
-    CredentialDecoder decoder = null;
-
-    @Before
-    public void setup() {
-        decoder = new Base64CredentialDecoder();
-    }
-
-    @Test
-    public void should_return_self_on_init() {
-        assertTrue(decoder.init(APP_WITH_ENCODED_PW) == decoder);
-    }
-
     final static JSONObject
             EMPTY = new JSONObject(),
             APP_NO_PW = new JSONObject("{ 'name': 'app-no-pw', 'credentials': { 'host': 'example.com', 'protocol': 'https' }, 'syslog_drain_url': '' }"),
@@ -39,7 +27,7 @@ public class Base64CredentialDecoderTest {
     @Test
     public void should_throw_meaningful_message_when_no_json() {
         try {
-            decoder.init(EMPTY);
+            new Base64CredentialDecoder(EMPTY);
             fail("no json did not throw");
         } catch (RuntimeException e) {
             assertThat(
@@ -52,7 +40,7 @@ public class Base64CredentialDecoderTest {
     @Test
     public void should_throw_meaningful_message_when_no_password() {
         try {
-            decoder.init(APP_NO_PW);
+            new Base64CredentialDecoder(APP_NO_PW);
             fail("no password did not throw");
         } catch (RuntimeException e) {
             assertThat(
@@ -65,11 +53,11 @@ public class Base64CredentialDecoderTest {
     @Test
     public void should_return_decoded_base64_encoded_password() {
         assertThat(
-                decoder.init(APP_WITH_ENCODED_PW).getPassword(),
+                new Base64CredentialDecoder(APP_WITH_ENCODED_PW).getPassword(),
                 is(equalTo("svc-password"))
         );
         assertThat(
-                decoder.init(APP_WITH_ENCODED_PW2).getPassword(),
+                new Base64CredentialDecoder(APP_WITH_ENCODED_PW2).getPassword(),
                 is(equalTo("super_secret!!##"))
         );
     }
@@ -77,7 +65,7 @@ public class Base64CredentialDecoderTest {
     @Test
     public void should_throw_meaningful_message_when_not_properly_encoded() {
         try {
-            decoder.init(APP_WITH_PLAIN_PW);
+            new Base64CredentialDecoder(APP_WITH_PLAIN_PW);
             fail("plaintext password did not throw");
         } catch (RuntimeException e) {
             assertThat(

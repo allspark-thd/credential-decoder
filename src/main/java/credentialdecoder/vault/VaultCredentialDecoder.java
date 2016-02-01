@@ -5,7 +5,6 @@ import org.apache.commons.codec.Charsets;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.entity.StringEntity;
@@ -21,14 +20,16 @@ public class VaultCredentialDecoder implements credentialdecoder.CredentialDecod
     private String app, user, vault_url, login_path, creds_path;
     static HttpClient client = HttpClients.createDefault();
 
-    @Override
-    public credentialdecoder.CredentialDecoder init(JSONObject props) {
+    public VaultCredentialDecoder(JSONObject props) {
+        init(props);
+    }
+
+    void init(JSONObject props) {
         this.app = getApp.apply(props);
         this.user = getUser.apply(props);
         this.vault_url = getVaultUrl.apply(props);
         this.creds_path = vault_url + getCredsPath.apply(props);
         this.login_path = vault_url + getLoginPath.apply(props);
-        return this;
     }
 
     private static Function<JSONObject, String> getField(String field) {
@@ -51,96 +52,99 @@ public class VaultCredentialDecoder implements credentialdecoder.CredentialDecod
             getLoginPath = getField("login_path");
 
 
-    static RuntimeException responseErr(HttpResponse response) {
-        return new RuntimeException(
-                response.getStatusLine().getStatusCode() +
-                        " : " +
-                        response.getStatusLine().getReasonPhrase()
-        );
+    static JSONObject handle(HttpResponse response) {
+        if (response.getStatusLine().getStatusCode() != 200) {
+            throw new VaultException(response);
+        }
+        try {
+            return new JSONObject(
+                    EntityUtils.toString(response.getEntity(), Charsets.UTF_8)
+            );
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    static ResponseHandler<JSONObject> toJson =
-            response -> {
-                if (response.getStatusLine().getStatusCode() != 200) {
-                    throw responseErr(response);
-                }
-                try {
-                    return new JSONObject(
-                            EntityUtils.toString(response.getEntity(), Charsets.UTF_8)
+    static JSONObject send(HttpUriRequest request) {
+        try {
+            return client
+                    .execute(
+                            request,
+                            VaultCredentialDecoder::handle
                     );
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            };
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-    static Function<HttpUriRequest, JSONObject> send =
-            request -> {
-                try {
-                    return client
-                            .execute(
-                                    request,
-                                    toJson
-                            );
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            };
+    static HttpEntity toEntity(JSONObject json) {
+        return new StringEntity(json.toString(), Charsets.UTF_8);
+    }
 
-    static Function<JSONObject, HttpEntity> toEntity =
-            json -> new StringEntity(json.toString(), Charsets.UTF_8);
+    HttpUriRequest credsRequest(String token) {
+        return RequestBuilder
+                .get(creds_path)
+                .addHeader("X-Vault-Token", token)
+                .build();
+    }
 
+    static Function<JSONObject, JSONObject> getjson(String field) {
+        return json -> json.getJSONObject(field);
+    }
 
-    static Function<RequestBuilder, HttpUriRequest> buildRequest =
-            RequestBuilder::build;
+    static Function<JSONObject, String> getjsonstr(String field) {
+        return json -> json.getString(field);
+    }
 
-    Function<String, HttpUriRequest> credsRequest =
-            token -> RequestBuilder
-                    .get(creds_path)
-                    .addHeader("X-Vault-Token", token).build();
+    String extractToken(JSONObject json) {
+        return json.getJSONObject("auth").getString("client_token");
+    }
 
-    static Function<String, Function<JSONObject, JSONObject>>
-            getjson = field -> json -> json.getJSONObject(field);
+    HttpUriRequest tokenRequest(JSONObject credentials) {
+        return RequestBuilder
+                .post(login_path)
+                .setEntity(
+                        toEntity(credentials))
+                .build();
+    }
 
-    static Function<String, Function<JSONObject, String>> getjsonstr =
-            field -> json -> json.getString(field);
+    JSONObject fetchToken(JSONObject credentials) {
+        return send(tokenRequest(credentials));
+    }
 
-    static Function<JSONObject, String> extractToken =
-            getjsonstr
-                    .apply("client_token")
-                    .compose(getjson.apply("auth"));
-
-    Function<JSONObject, HttpUriRequest> tokenRequest =
-            buildRequest
-                    .compose(
-                            RequestBuilder
-                                    .post(login_path)
-                                    ::setEntity
-                    )
-                    .compose(toEntity);
-    Function<JSONObject, JSONObject>
-            fetchToken = send.compose(tokenRequest);
-    Function<String, JSONObject>
-            fetchCreds = send.compose(credsRequest);
+    JSONObject fetchCreds(String token) {
+        return send(credsRequest(token));
+    }
 
     String getToken(JSONObject appCreds) {
-        return extractToken
-                .compose(fetchToken)
-                .apply(appCreds);
+        return extractToken(
+                fetchToken(appCreds));
     }
 
-    public JSONObject getCreds(JSONObject json) {
-        return
-                getjson
-                        .apply("data")
-                        .compose(fetchCreds)
-                        .compose(this::getToken)
-                        .apply(json);
+    JSONObject getVaultData() {
+        return fetchCreds(
+                getToken(getAppCreds())
+        )
+                .getJSONObject("data");
+    }
+
+    JSONObject getAppCreds() {
+        return new JSONObject()
+                .put("app_id", app)
+                .put("user_id", user);
     }
 
     @Override
     public String getPassword() {
-        return getCreds(new JSONObject().put("app_id", app).put("user_id", user))
-                .toString()
-                ;
+        return getVaultData()
+                .getString("value");
+    }
+}
+
+class VaultException extends RuntimeException {
+    public VaultException(HttpResponse response) {
+        super(response.getStatusLine().getStatusCode() +
+                " : " +
+                response.getStatusLine().getReasonPhrase());
     }
 }

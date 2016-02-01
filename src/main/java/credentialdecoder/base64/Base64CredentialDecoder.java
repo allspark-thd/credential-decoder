@@ -8,10 +8,11 @@ public class Base64CredentialDecoder implements CredentialDecoder {
 
     private String password = null;
 
-    @Override
-    public CredentialDecoder init(JSONObject props) {
+    public Base64CredentialDecoder ( JSONObject props ) {
+        this.init( props );
+    }
+    void init(JSONObject props) {
         this.password = decode(extractPassword(props));
-        return this;
     }
 
     private static String decode(String base64str) {
